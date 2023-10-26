@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 
 services:
     python:
@@ -10,3 +10,24 @@ services:
             - '8000:8000'
         volumes:
             - ./backend:/app
+        networks:
+            - data-networks
+
+    next:
+        container_name: 'data-next'
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        ports:
+            - '3000:3000'
+        volumes:
+            - ./frontend:/app
+        depends_on:
+            - python
+        networks:
+            - data-networks
+
+networks:
+    data-networks:
+        driver: bridge
+        external: true
