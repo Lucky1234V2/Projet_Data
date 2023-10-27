@@ -14,8 +14,18 @@ const DrawingCanvas: React.FC = () => {
 
     const handleSendDrawing = async () => {
         if (canvasRef.current) {
+            const drawingCanvas = canvasRef.current.canvas.drawing;
+            const context = drawingCanvas.getContext('2d');
+
+            // Dessiner un fond blanc
+            context.globalCompositeOperation = 'destination-over';
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            context.globalCompositeOperation = 'source-over';
+
             const dataURL =
                 canvasRef.current.canvas.drawing.toDataURL('image/png');
+            console.log(dataURL);
             try {
                 const data = await predictNumber(dataURL);
                 setResponse(data);
@@ -35,10 +45,12 @@ const DrawingCanvas: React.FC = () => {
 
     const canvasOptions: CanvasDrawProps = {
         lazyRadius: 0,
-        brushRadius: 5,
-        canvasHeight: 320,
+        brushRadius: 7.5,
+        brushColor: '#000000',
+        catenaryColor: '#000000',
+        backgroundColor: '#ffffff',
         canvasWidth: 320,
-        brushColor: '#000',
+        canvasHeight: 320,
     };
 
     return (
