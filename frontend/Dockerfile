@@ -1,11 +1,13 @@
 FROM node:20
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+RUN npm install -g pnpm
+
+COPY package*.json pnpm-lock.yaml ./
+RUN pnpm install
 
 COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD [ "pnpm", "dev" ]

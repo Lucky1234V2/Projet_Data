@@ -22,6 +22,9 @@ services:
             - '3000:3000'
         volumes:
             - ./frontend:/app
+            - /app/node_modules
+            - /app/.pnpm-store
+            - /app/.next
         depends_on:
             - python
         networks:
@@ -30,4 +33,3 @@ services:
 networks:
     data-networks:
         driver: bridge
-        external: true
