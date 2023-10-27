@@ -2,23 +2,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 # Charger les données MNIST
-(mnist_train_images, mnist_train_labels), (
-    mnist_test_images,
-    mnist_test_labels,
-) = tf.keras.datasets.mnist.load_data()
-
-# Vérifier la forme des données
-print("Forme des images d'entraînement:", mnist_train_images.shape)
-print("Forme des étiquettes d'entraînement:", mnist_train_labels.shape)
-print("Forme des images de test:", mnist_test_images.shape)
-print("Forme des étiquettes de test:", mnist_test_labels.shape)
-
-
-# Afficher les 5 premières images du jeu de données d'entraînement
-for i in range(5):
-    plt.imshow(mnist_train_images[i], cmap="gray")
-    plt.title(f"Étiquette: {mnist_train_labels[i]}")
-    plt.show()
+(mnist_train_images, mnist_train_labels), (mnist_test_images, mnist_test_labels) = tf.keras.datasets.mnist.load_data()
 
 # Normalisation des images
 mnist_train_images = mnist_train_images / 255.0
@@ -28,46 +12,46 @@ mnist_test_images = mnist_test_images / 255.0
 mnist_train_labels = tf.keras.utils.to_categorical(mnist_train_labels, 10)
 mnist_test_labels = tf.keras.utils.to_categorical(mnist_test_labels, 10)
 
+# Augmentation des données
+datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+    rotation_range=10,
+    zoom_range=0.1,
+    width_shift_range=0.5,  # Permet des décalages allant jusqu'à 50% de la largeur de l'image
+    height_shift_range=0.5  # Permet des décalages allant jusqu'à 50% de la hauteur de l'image
+)
+datagen.fit(mnist_train_images.reshape(-1, 28, 28, 1))
+
 # Création du modèle
-model = tf.keras.models.Sequential(
-    [
-        # Redimensionnement des images pour les adapter à un CNN
-        tf.keras.layers.Reshape((28, 28, 1), input_shape=(28, 28)),
-        # Première couche convolutive
-        tf.keras.layers.Conv2D(32, (3, 3), activation="relu"),
-        tf.keras.layers.MaxPooling2D(2, 2),
-        # Deuxième couche convolutive
-        tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
-        tf.keras.layers.MaxPooling2D(2, 2),
-        # Aplatir les résultats pour les adapter à une couche DNN
-        tf.keras.layers.Flatten(),
-        # Couche dense de 128 neurones
-        tf.keras.layers.Dense(128, activation="relu"),
-        # Couche de sortie avec 10 neurones (pour 10 classes) avec activation softmax
-        tf.keras.layers.Dense(10, activation="softmax"),
-    ]
-)
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Reshape((28, 28, 1), input_shape=(28, 28)),
+    tf.keras.layers.Conv2D(32, (3, 3), activation="relu"),
+    tf.keras.layers.BatchNormalization(),
+    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
+    tf.keras.layers.BatchNormalization(),
+    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Conv2D(128, (3, 3), activation="relu"),
+    tf.keras.layers.BatchNormalization(),
+    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(256, activation="relu"),
+    tf.keras.layers.Dropout(0.6),
+    tf.keras.layers.Dense(10, activation="softmax"),
+])
 
-# Compilation du modèle
-model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+# Compilation du modèle avec un taux d'apprentissage ajusté
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
 
-# Affichage du résumé du modèle
-model.summary()
-
-# Entraînement du modèle
+# Entraînement du modèle avec augmentation des données
 history = model.fit(
-    mnist_train_images,
-    mnist_train_labels,
-    epochs=10,  # Nombre de fois où le modèle verra l'ensemble des données d'entraînement
-    validation_data=(
-        mnist_test_images,
-        mnist_test_labels,
-    ),  # Pour évaluer les performances du modèle sur les données de test après chaque époque
+    datagen.flow(mnist_train_images.reshape(-1, 28, 28, 1), mnist_train_labels, batch_size=32),
+    epochs=25,
+    validation_data=(mnist_test_images.reshape(-1, 28, 28, 1), mnist_test_labels)
 )
 
-# Affichage de l'historique de l'entraînement (précision et perte)
+# Affichage de l'historique de l'entraînement
 plt.figure(figsize=(12, 4))
-
 plt.subplot(1, 2, 1)
 plt.plot(history.history["accuracy"], label="Précision (entraînement)")
 plt.plot(history.history["val_accuracy"], label="Précision (validation)")
@@ -88,4 +72,4 @@ plt.tight_layout()
 plt.show()
 
 # Sauvegarder le modèle
-model.save("models/mnist_model.h5")
+model.save("models/mnist_model.keras")

@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 # Charger le modèle
-model = load_model("models/mnist_model3.h5")
+model = load_model("models/mnist_model.keras")
 
 
 @app.post("/predict/")
